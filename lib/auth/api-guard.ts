@@ -23,14 +23,14 @@ export enum AuthError {
  * @returns 是否有效
  */
 export function validateApiKey(apiKey: string | null): boolean {
-  if (!apiKey) {
-    return false;
-  }
-
-  // 开发模式下，如果未配置 API keys，则跳过验证
+  // 开发模式下，如果未配置 API keys，则跳过验证（必须最先检查）
   if (config.isDevelopment && !config.apiKeys.length) {
     console.warn('[Auth] Development mode: No API keys configured, skipping validation');
     return true;
+  }
+
+  if (!apiKey) {
+    return false;
   }
 
   // 验证 API Key 是否在白名单中
