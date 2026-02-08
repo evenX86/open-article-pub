@@ -23,6 +23,10 @@ yarn-error.log*
 
 # Debug
 .vscode/
+.idea/
+
+# Test reports
+tests/reports/
 
 # Local env files - DO NOT COMMIT
 .env*.local
