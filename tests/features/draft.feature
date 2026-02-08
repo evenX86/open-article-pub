@@ -11,6 +11,7 @@
   背景:
     假设系统已正确配置微信 AppID 和 AppSecret
     并且 Access Token 有效且未过期
+    并且已提供有效的 API Key（生产环境必须）
 
   @happy_path
   场景: 使用最简单的 Markdown 创建草稿成功
