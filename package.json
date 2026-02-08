@@ -9,7 +9,12 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "type-check": "tsc --noEmit"
+    "type-check": "tsc --noEmit",
+    "test": "NODE_OPTIONS='--import tsx/esm' cucumber-js",
+    "test:markdown": "NODE_OPTIONS='--import tsx/esm' cucumber-js --tags '@markdown_parser'",
+    "test:token": "NODE_OPTIONS='--import tsx/esm' cucumber-js --tags '@token_management'",
+    "test:auth": "NODE_OPTIONS='--import tsx/esm' cucumber-js --tags '@api_auth'",
+    "test:draft": "NODE_OPTIONS='--import tsx/esm' cucumber-js --tags '@wechat_draft'"
   },
   "dependencies": {
     "next": "^15.1.6",
@@ -17,11 +22,15 @@
     "react-dom": "^19.0.0"
   },
   "devDependencies": {
+    "@cucumber/cucumber": "^12.6.0",
+    "@cucumber/pretty-formatter": "^3.0.0",
     "@types/node": "^22",
     "@types/react": "^19",
     "@types/react-dom": "^19",
-    "typescript": "^5",
     "eslint": "^9",
-    "eslint-config-next": "^15.1.6"
+    "eslint-config-next": "^15.1.6",
+    "ts-node": "^10.9.2",
+    "tsx": "^4.21.0",
+    "typescript": "^5"
   }
 }
