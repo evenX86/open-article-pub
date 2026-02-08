@@ -15,7 +15,6 @@ import { NextRequest, NextResponse } from 'next/server';
 export enum AuthError {
   MISSING_KEY = 'MISSING_API_KEY',
   INVALID_KEY = 'INVALID_API_KEY',
-  UNAUTHORIZED = 'UNAUTHORIZED',
 }
 
 /**
@@ -48,7 +47,8 @@ export function extractApiKey(request: NextRequest): string | null {
   // 优先从 Authorization header 获取
   const authHeader = request.headers.get('authorization');
   if (authHeader?.startsWith('Bearer ')) {
-    return authHeader.slice(7);
+    const token = authHeader.slice(7).trim();
+    return token || null;
   }
 
   // 其次从 X-API-Key header 获取
@@ -62,7 +62,6 @@ export function createAuthErrorResponse(error: AuthError): NextResponse {
   const messages: Record<AuthError, string> = {
     [AuthError.MISSING_KEY]: 'API Key is required',
     [AuthError.INVALID_KEY]: 'Invalid API Key',
-    [AuthError.UNAUTHORIZED]: 'Unauthorized',
   };
 
   return NextResponse.json(
@@ -82,13 +81,14 @@ export function createAuthErrorResponse(error: AuthError): NextResponse {
  * ```ts
  * import { withAuth } from '@/lib/auth/api-guard';
  *
- * export const POST = withAuth(async (request, context) => {
+ * export const POST = withAuth(async (request) => {
  *   // 已认证的处理逻辑
  *   return NextResponse.json({ success: true });
  * });
  * ```
  */
-export function withAuth<T extends unknown[] = []>(
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function withAuth<T extends any[] = []>(
   handler: (request: NextRequest, ...args: T) => Promise<NextResponse>
 ) {
   return async (request: NextRequest, ...args: T): Promise<NextResponse> => {
@@ -97,6 +97,8 @@ export function withAuth<T extends unknown[] = []>(
 
     // 验证 API Key
     if (!validateApiKey(apiKey)) {
+      // 记录失败的认证尝试
+      console.warn(`[Auth] Failed attempt from ${request.headers.get('x-forwarded-for') || 'unknown'}: ${apiKey ? 'invalid key' : 'missing key'}`);
       return createAuthErrorResponse(
         apiKey ? AuthError.INVALID_KEY : AuthError.MISSING_KEY
       );
@@ -119,6 +121,8 @@ export function checkAuth(request: NextRequest): NextResponse | null {
   const apiKey = extractApiKey(request);
 
   if (!validateApiKey(apiKey)) {
+    // 记录失败的认证尝试
+    console.warn(`[Auth] Failed attempt from ${request.headers.get('x-forwarded-for') || 'unknown'}: ${apiKey ? 'invalid key' : 'missing key'}`);
     return createAuthErrorResponse(
       apiKey ? AuthError.INVALID_KEY : AuthError.MISSING_KEY
     );
