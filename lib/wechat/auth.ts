@@ -12,7 +12,7 @@
 
 import { config } from '../config.js';
 import { tokenCache } from '../cache/token-cache.js';
-import { extractWechatError, isTokenRelatedError } from './errors.js';
+import { extractWechatError } from './errors.js';
 import type {
   GetAccessTokenRequest,
   GetAccessTokenResponse,

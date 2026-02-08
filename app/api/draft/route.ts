@@ -25,10 +25,9 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { addDraft } from '@/lib/wechat/client';
+import { addDraft } from '@/lib/wechat/draft';
 import { markdownToDraftArticle, extractFrontmatter } from '@/lib/markdown/converter';
 import { checkAuth } from '@/lib/auth/api-guard';
-import type { DraftArticle } from '@/lib/wechat/types';
 
 interface DraftRequest {
   /** Markdown 内容 */
@@ -59,7 +58,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<DraftResp
   // 认证检查
   const authError = checkAuth(request);
   if (authError) {
-    return authError;
+    return authError as NextResponse<DraftResponse>;
   }
 
   try {
@@ -120,10 +119,11 @@ export async function POST(request: NextRequest): Promise<NextResponse<DraftResp
 
     // 处理微信 API 错误
     if (error && typeof error === 'object' && 'errcode' in error) {
+      const wechatError = error as { errcode: number; errmsg?: string };
       return NextResponse.json(
         {
           success: false,
-          error: `WeChat API Error [${error.errcode}]: ${error.errmsg}`,
+          error: `WeChat API Error [${wechatError.errcode}]: ${wechatError.errmsg || 'Unknown'}`,
         },
         { status: 400 }
       );

@@ -88,7 +88,7 @@ export function createAuthErrorResponse(error: AuthError): NextResponse {
  * });
  * ```
  */
-export function withAuth<T extends any[] = []>(
+export function withAuth<T extends unknown[] = []>(
   handler: (request: NextRequest, ...args: T) => Promise<NextResponse>
 ) {
   return async (request: NextRequest, ...args: T): Promise<NextResponse> => {
