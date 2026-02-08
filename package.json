@@ -24,6 +24,7 @@
   "devDependencies": {
     "@cucumber/cucumber": "^12.6.0",
     "@cucumber/pretty-formatter": "^3.0.0",
+    "@eslint/eslintrc": "^3.3.3",
     "@types/node": "^22",
     "@types/react": "^19",
     "@types/react-dom": "^19",
