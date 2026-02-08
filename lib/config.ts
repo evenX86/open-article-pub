@@ -16,6 +16,8 @@ interface Config {
   isProduction: boolean;
   /** API 基础地址 */
   apiBaseUrl: string;
+  /** API Keys 白名单（逗号分隔） */
+  apiKeys: string[];
 }
 
 /**
@@ -66,6 +68,12 @@ export const config: Config = {
   get apiBaseUrl(): string {
     // 微信公众号 API 基础地址
     return 'https://api.weixin.qq.com/cgi-bin';
+  },
+
+  get apiKeys(): string[] {
+    const keys = getEnvVar('API_KEYS', false);
+    if (!keys) return [];
+    return keys.split(',').map(k => k.trim()).filter(k => k.length > 0);
   },
 };
 

@@ -5,6 +5,9 @@
  *
  * POST /api/draft
  *
+ * 请求头：
+ * Authorization: Bearer <api_key>  或  X-API-Key: <api_key>
+ *
  * 请求体：
  * {
  *   "markdown": "# 标题\n\n内容...",
@@ -24,6 +27,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { addDraft } from '@/lib/wechat/client';
 import { markdownToDraftArticle, extractFrontmatter } from '@/lib/markdown/converter';
+import { checkAuth } from '@/lib/auth/api-guard';
 import type { DraftArticle } from '@/lib/wechat/types';
 
 interface DraftRequest {
@@ -52,6 +56,12 @@ interface DraftResponse {
 }
 
 export async function POST(request: NextRequest): Promise<NextResponse<DraftResponse>> {
+  // 认证检查
+  const authError = checkAuth(request);
+  if (authError) {
+    return authError;
+  }
+
   try {
     // 解析请求体
     const body: DraftRequest = await request.json();
@@ -137,7 +147,7 @@ export async function OPTIONS() {
     headers: {
       'Access-Control-Allow-Origin': '*',
       'Access-Control-Allow-Methods': 'POST, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-API-Key',
     },
   });
 }

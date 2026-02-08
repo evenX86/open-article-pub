@@ -5,6 +5,8 @@
  */
 
 const API_BASE_URL = 'http://localhost:3000';
+// 配置你的 API Key（从环境变量读取）
+const API_KEY = process.env.API_KEY || 'your_api_key_here';
 
 /**
  * 创建微信草稿
@@ -17,11 +19,12 @@ async function createWechatDraft(markdown, options = {}) {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
+      'Authorization': `Bearer ${API_KEY}`,
     },
     body: JSON.stringify({
       markdown,
       ...options,
-    },
+    }),
   });
 
   const result = await response.json();
