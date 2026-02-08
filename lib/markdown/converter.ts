@@ -81,6 +81,52 @@ export function markdownToDraftArticle(
 }
 
 /**
+ * HTML 转义函数
+ * 防止 XSS 攻击和确保 HTML 正确显示
+ */
+function escapeHtml(text: string): string {
+  const htmlEscapeMap: Record<string, string> = {
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#39;',
+  };
+  return text.replace(/[&<>"']/g, (char) => htmlEscapeMap[char]);
+}
+
+/**
+ * 微信不支持的标签列表（安全过滤）
+ */
+const UNSAFE_TAGS = ['script', 'style', 'iframe', 'form', 'input', 'button', 'object', 'embed'];
+
+/**
+ * 移除微信不支持的标签
+ */
+function removeUnsafeTags(html: string): string {
+  // 移除完整的自闭合标签（如 <img />）
+  for (const tag of UNSAFE_TAGS) {
+    const selfClosingRegex = new RegExp(`<${tag}[^>]*\\/?>`, 'gi');
+    html = html.replace(selfClosingRegex, '');
+
+    // 移除成对标签及其内容
+    const pairRegex = new RegExp(`<${tag}[^>]*>([\\s\\S]*?)<\\/${tag}>`, 'gi');
+    html = html.replace(pairRegex, '');
+  }
+
+  return html;
+}
+
+/**
+ * 移除 HTML 标签中的 class 属性
+ * 微信公众号编辑器会移除 class 属性
+ */
+function removeClassAttributes(html: string): string {
+  // 移除 class="xxx" 或 class='xxx'
+  return html.replace(/\s+class\s*=\s*["'][^"']*["']/gi, '');
+}
+
+/**
  * 简单的 Markdown 转 HTML
  *
  * 注意：这是一个基础实现，生产环境建议使用成熟的库如：
@@ -92,53 +138,74 @@ export function convertMarkdownToHtml(markdown: string): string {
   let html = markdown;
 
   // 代码块（最先处理，使用占位符保护）
-  // 使用不含特殊字符的占位符，避免被其他正则匹配
   const codeBlocks: string[] = [];
   html = html.replace(/```(\w+)?\n([\s\S]+?)```/g, function(match, lang, code) {
     const index = codeBlocks.length;
     // 如果代码末尾没有换行符，添加一个以匹配测试期望
     const codeContent = code.endsWith('\n') ? code : code + '\n';
-    codeBlocks.push('<pre><code>' + codeContent + '</code></pre>');
+    // 代码内容需要转义 HTML
+    const escapedCode = escapeHtml(codeContent);
+    codeBlocks.push('<pre><code>' + escapedCode + '</code></pre>');
     return `<!-- CODE-BLOCK-${index} -->`;
   });
 
-  // 标题（h1-h6）
-  html = html.replace(/^#\s+(.+)$/gm, '<h1>$1</h1>');
-  html = html.replace(/^##\s+(.+)$/gm, '<h2>$1</h2>');
-  html = html.replace(/^###\s+(.+)$/gm, '<h3>$1</h3>');
-  html = html.replace(/^####\s+(.+)$/gm, '<h4>$1</h4>');
-  html = html.replace(/^#####\s+(.+)$/gm, '<h5>$1</h5>');
-  html = html.replace(/^######\s+(.+)$/gm, '<h6>$1</h6>');
+  // 标题（h1-h6）- 先转义标题内容
+  html = html.replace(/^#\s+(.+)$/gm, (_, title) => `<h1>${escapeHtml(title)}</h1>`);
+  html = html.replace(/^##\s+(.+)$/gm, (_, title) => `<h2>${escapeHtml(title)}</h2>`);
+  html = html.replace(/^###\s+(.+)$/gm, (_, title) => `<h3>${escapeHtml(title)}</h3>`);
+  html = html.replace(/^####\s+(.+)$/gm, (_, title) => `<h4>${escapeHtml(title)}</h4>`);
+  html = html.replace(/^#####\s+(.+)$/gm, (_, title) => `<h5>${escapeHtml(title)}</h5>`);
+  html = html.replace(/^######\s+(.+)$/gm, (_, title) => `<h6>${escapeHtml(title)}</h6>`);
 
-  // 图片（必须在链接之前处理，因为图片语法包含链接语法）
-  html = html.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '<img src="$2" alt="$1" />');
+  // 引用 - 先转义内容
+  html = html.replace(/^>\s+(.+)$/gm, (_, content) => `<blockquote>${escapeHtml(content)}</blockquote>`);
+
+  // 图片（必须在链接之前处理）
+  html = html.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, (_, alt, src) => {
+    return `<img src="${escapeHtml(src)}" alt="${escapeHtml(alt)}" />`;
+  });
 
   // 链接
-  html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2">$1</a>');
+  html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, (_, text, href) => {
+    return `<a href="${escapeHtml(href)}">${escapeHtml(text)}</a>`;
+  });
 
   // 行内代码（必须在粗体/斜体之前处理）
-  html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
+  html = html.replace(/`([^`]+)`/g, (_, code) => `<code>${escapeHtml(code)}</code>`);
 
   // 粗体和斜体
-  html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
-  html = html.replace(/\*(.+?)\*/g, '<em>$1</em>');
-  html = html.replace(/__(.+?)__/g, '<strong>$1</strong>');
-  html = html.replace(/_(.+?)_/g, '<em>$1</em>');
+  html = html.replace(/\*\*(.+?)\*\*/g, (_, content) => `<strong>${escapeHtml(content)}</strong>`);
+  html = html.replace(/\*(.+?)\*/g, (_, content) => `<em>${escapeHtml(content)}</em>`);
+  html = html.replace(/__(.+?)__/g, (_, content) => `<strong>${escapeHtml(content)}</strong>`);
+  html = html.replace(/_(.+?)_/g, (_, content) => `<em>${escapeHtml(content)}</em>`);
 
-  // 引用
-  html = html.replace(/^>\s+(.+)$/gm, '<blockquote>$1</blockquote>');
+  // 无序列表 - 收集连续的列表项
+  const listItems: string[] = [];
+  html = html.replace(/^[\*\-]\s+(.+)$/gm, (_, content) => {
+    listItems.push(`<li>${escapeHtml(content)}</li>`);
+    return '{{LIST-ITEM}}';
+  });
 
-  // 无序列表
-  html = html.replace(/^\*\s+(.+)$/gm, '<li>$1</li>');
-  html = html.replace(/^- (.+)$/gm, '<li>$1</li>');
-  html = html.replace(/(<li>.*<\/li>\n?)+/g, '<ul>$&</ul>');
+  // 处理列表 - 将连续的 {{LIST-ITEM}} 替换为 <ul>
+  html = html.replace(/(\{\{LIST-ITEM\}\}\n?)+/g, () => {
+    const items = listItems.splice(0, listItems.length).join('\n');
+    return `<ul>\n${items}\n</ul>`;
+  });
 
   // 有序列表
-  html = html.replace(/^\d+\.\s+(.+)$/gm, '<li>$1</li>');
-  html = html.replace(/(<li>.*<\/li>\n?)+/g, '<ol>$&</ol>');
+  const orderedListItems: string[] = [];
+  html = html.replace(/^\d+\.\s+(.+)$/gm, (_, content) => {
+    orderedListItems.push(`<li>${escapeHtml(content)}</li>`);
+    return '{{ORDERED-LIST-ITEM}}';
+  });
 
-  // 段落和换行（不要处理已转换的 HTML 标签内容和代码块占位符）
-  // 只处理纯文本行
+  // 处理有序列表
+  html = html.replace(/(\{\{ORDERED-LIST-ITEM\}\}\n?)+/g, () => {
+    const items = orderedListItems.splice(0, orderedListItems.length).join('\n');
+    return `<ol>\n${items}\n</ol>`;
+  });
+
+  // 段落和换行
   const lines = html.split('\n');
   const result: string[] = [];
   let inParagraph = false;
@@ -146,7 +213,7 @@ export function convertMarkdownToHtml(markdown: string): string {
   for (const line of lines) {
     const trimmed = line.trim();
     // 如果是 HTML 标签行、占位符行或空行，关闭当前段落
-    if (trimmed === '' || trimmed.startsWith('<')) {
+    if (trimmed === '' || trimmed.startsWith('<') || trimmed.startsWith('{{')) {
       if (inParagraph) {
         result.push('</p>');
         inParagraph = false;
@@ -169,10 +236,16 @@ export function convertMarkdownToHtml(markdown: string): string {
 
   html = result.join('<br />');
 
-  // 最后恢复代码块占位符
-  html = html.replace(/<!-- CODE-BLOCK-(\d+) -->/g, function(match, index) {
-    return codeBlocks[parseInt(index)];
+  // 恢复代码块占位符
+  html = html.replace(/<!-- CODE-BLOCK-(\d+) -->/g, (_, index) => {
+    return codeBlocks[parseInt(index, 10)];
   });
+
+  // 后处理：移除微信不支持的标签
+  html = removeUnsafeTags(html);
+
+  // 后处理：移除 class 属性
+  html = removeClassAttributes(html);
 
   return html;
 }
