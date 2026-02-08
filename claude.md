@@ -63,6 +63,41 @@ refactor(cache): extract token cache to separate module
 test(converter): add markdown parsing tests
 ```
 
+### 原子化提交（Atomic Commits）
+
+> **核心原则**：每个 commit 只做一件事，保持提交的独立性和可回滚性。
+
+**为什么需要原子化提交**：
+- ✅ 便于代码审查（Review 每个改动更清晰）
+- ✅ 便于回滚（可单独撤销某个功能）
+- ✅ 便于 bisect（快速定位 bug 引入的 commit）
+- ✅ 保持 git 历史整洁
+
+**示例 - 错误的合并提交**：
+```bash
+# ❌ 一个 commit 做了多件事
+git commit -m "feat(draft): add draft API and fix token cache bug"
+```
+
+**示例 - 正确的原子化提交**：
+```bash
+# ✅ 分拆成多个独立的 commit
+git commit -m "feat(draft): add draft API endpoint"
+git commit -m "fix(auth): resolve token cache expiration bug"
+git commit -m "docs(draft): update API documentation"
+```
+
+**原子化检查清单**：
+1. ✅ 这个 commit 是否只解决一个问题？
+2. ✅ 如果移除这个 commit，系统是否仍然可用？
+3. ✅ commit message 是否准确描述了这个单一改动？
+4. ✅ 是否包含了格式化或无关的修改（应拆分）？
+
+**特殊场景**：
+- **重构 + 修复**：先重构（`refactor`），再修复（`fix`），分开提交
+- **新功能 + 测试**：先写测试（`test`），再实现功能（`feat`），分开提交
+- **文档更新**：文档更新单独提交（`docs`），不与功能混在一起
+
 ### 提交前检查清单
 
 1. **Type Check**: `pnpm type-check` (0 errors)
