@@ -210,25 +210,38 @@ export function convertMarkdownToHtml(markdown: string): string {
   const result: string[] = [];
   let inParagraph = false;
 
+  // 我们生成的标签列表 - 如果行包含这些标签，说明已经被处理过
+  const ourGeneratedTags = /<(strong|em|code|h[1-6]|blockquote|li|ul|ol|pre|a|img|p)\b/i;
+
   for (const line of lines) {
     const trimmed = line.trim();
-    // 如果是 HTML 标签行、占位符行或空行，关闭当前段落
-    if (trimmed === '' || trimmed.startsWith('<') || trimmed.startsWith('{{')) {
+    // 空行处理
+    if (trimmed === '') {
       if (inParagraph) {
         result.push('</p>');
         inParagraph = false;
       }
-      if (trimmed !== '') {
-        result.push(line);
-      }
-    } else {
-      // 纯文本行，开始段落
-      if (!inParagraph) {
-        result.push('<p>');
-        inParagraph = true;
+      continue;
+    }
+
+    // 占位符行或以 HTML 标签开头的行
+    if (trimmed.startsWith('{{') || trimmed.startsWith('<')) {
+      if (inParagraph) {
+        result.push('</p>');
+        inParagraph = false;
       }
       result.push(line);
+      continue;
     }
+
+    // 纯文本行 - 检查是否包含我们生成的标签
+    const processedLine = ourGeneratedTags.test(line) ? line : escapeHtml(line);
+
+    if (!inParagraph) {
+      result.push('<p>');
+      inParagraph = true;
+    }
+    result.push(processedLine);
   }
   if (inParagraph) {
     result.push('</p>');

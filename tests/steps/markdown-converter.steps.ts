@@ -94,3 +94,59 @@ Then('{string} 属性应被移除', function (attribute: string) {
     throw new Error(`期望 "${attribute}" 属性被移除，但实际输出仍包含它:\n${html}`);
   }
 });
+
+// 额外的步骤定义
+Given('输入 Markdown 包含脚本标签', function () {
+  (global as any).testState.markdownInput = '<script>alert("test")</script>';
+});
+
+Given('输入 Markdown 转换后包含 {string}', function (html: string) {
+  (global as any).testState.markdownInput = html;
+});
+
+Then('{string} 应被转义为 {string}', function (char: string, escaped: string) {
+  ensureConverted();
+  const html = (global as any).testState.htmlOutput;
+  if (html === null) {
+    throw new Error('HTML 输出为空，转换可能失败');
+  }
+  if (!html.includes(escaped)) {
+    throw new Error(`期望 "${char}" 被转义为 "${escaped}"，但实际输出为:\n${html}`);
+  }
+});
+
+// 特殊字符步骤（Cucumber 对 < > 有特殊处理）
+Then('< 应被转义为 {string}', function (escaped: string) {
+  ensureConverted();
+  const html = (global as any).testState.htmlOutput;
+  if (html === null) {
+    throw new Error('HTML 输出为空，转换可能失败');
+  }
+  if (!html.includes(escaped)) {
+    throw new Error(`期望 "<" 被转义为 "${escaped}"，但实际输出为:\n${html}`);
+  }
+});
+
+Then('> 应被转义为 {string}', function (escaped: string) {
+  ensureConverted();
+  const html = (global as any).testState.htmlOutput;
+  if (html === null) {
+    throw new Error('HTML 输出为空，转换可能失败');
+  }
+  if (!html.includes(escaped)) {
+    throw new Error(`期望 ">" 被转义为 "${escaped}"，但实际输出为:\n${html}`);
+  }
+});
+
+// 完整的属性移除步骤
+Then('class 属性应被移除', function () {
+  ensureConverted();
+  const html = (global as any).testState.htmlOutput;
+  if (html === null) {
+    throw new Error('HTML 输出为空，转换可能失败');
+  }
+  const attrPattern = new RegExp('\\sclass=');
+  if (attrPattern.test(html)) {
+    throw new Error(`期望 "class" 属性被移除，但实际输出仍包含它:\n${html}`);
+  }
+});
