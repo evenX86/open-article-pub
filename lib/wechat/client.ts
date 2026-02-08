@@ -5,8 +5,8 @@
  * 参考设计：silicoco 项目中的 Stripe 客户端代理模式
  */
 
-import { WechatAuth, getAuth } from './auth.js';
-import { WechatDraft, getDraft } from './draft.js';
+import { WechatAuth, getAuth } from './auth';
+import { WechatDraft, getDraft } from './draft';
 
 /**
  * 微信 API 客户端
@@ -55,4 +55,4 @@ export const wechat = new Proxy({} as WechatClient, {
 
 // 导出便捷访问函数
 export { getAuth, getDraft };
-export type * from './types.js';
+export type * from './types';

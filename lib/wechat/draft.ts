@@ -5,14 +5,14 @@
  * https://developers.weixin.qq.com/doc/subscription/api/draftbox/draftmanage/api_draft_add.html
  */
 
-import { config } from '../config.js';
-import { getAccessToken } from './auth.js';
-import { extractWechatError } from './errors.js';
+import { config } from '../config';
+import { getAccessToken } from './auth';
+import { extractWechatError } from './errors';
 import type {
   AddDraftRequest,
   AddDraftResponse,
   DraftArticle,
-} from './types.js';
+} from './types';
 
 /**
  * 微信草稿箱管理器
@@ -99,5 +99,11 @@ export async function addDraft(
   articles: DraftArticle | DraftArticle[],
   accessToken?: string
 ): Promise<string> {
+  // 测试模式：返回模拟响应，不调用真实 API
+  if (process.env.WECHAT_MOCK_API === 'true') {
+    console.log('[Mock] addDraft called, returning mock media_id');
+    return 'mock_media_id_' + Date.now();
+  }
+
   return getDraft().add(articles, accessToken);
 }

@@ -3,7 +3,7 @@
  * 错误码参考：https://developers.weixin.qq.com/doc/offiaccount/Basic_Information/Interface_field_description.html
  */
 
-import { WechatApiError } from './types.js';
+import { WechatApiError } from './types';
 
 /** 错误码对应的错误信息 */
 const ERROR_MESSAGES: Record<number, string> = {

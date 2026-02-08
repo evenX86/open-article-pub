@@ -10,13 +10,13 @@
  * https://developers.weixin.qq.com/miniprogram/dev/server/API/mp-access-token/api_getaccesstoken.html
  */
 
-import { config } from '../config.js';
-import { tokenCache } from '../cache/token-cache.js';
-import { extractWechatError } from './errors.js';
+import { config } from '../config';
+import { tokenCache } from '../cache/token-cache';
+import { extractWechatError } from './errors';
 import type {
   GetAccessTokenRequest,
   GetAccessTokenResponse,
-} from './types.js';
+} from './types';
 
 /**
  * 微信认证管理器

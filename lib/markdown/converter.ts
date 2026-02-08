@@ -13,7 +13,7 @@
  * - 图片必须使用微信素材库的 URL
  */
 
-import type { DraftArticle } from '../wechat/types.js';
+import type { DraftArticle } from '../wechat/types';
 
 /** 转换配置选项 */
 export interface ConvertOptions {
