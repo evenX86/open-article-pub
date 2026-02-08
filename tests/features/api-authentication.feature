@@ -154,36 +154,26 @@
     并且 "Access-Control-Allow-Headers" 应包含 "Authorization"
     并且 "Access-Control-Allow-Headers" 应包含 "X-API-Key"
 
----
+# -----------------------------------------------------------------------------
+# API 认证规则总结（文档说明）
+#
+# ## 认证方式
+# - Authorization: Bearer key123 (优先)
+# - X-API-Key: key123 (备选)
+#
+# ## 环境行为
+# - development + 未配置 API_KEYS: 跳过认证
+# - development + 已配置 API_KEYS: 验证 API Key
+# - production + 未配置 API_KEYS: 拒绝所有请求
+# - production + 已配置 API_KEYS: 验证 API Key
+#
+# ## 错误码
+# - MISSING_API_KEY: 401, "API Key is required"
+# - INVALID_API_KEY: 401, "Invalid API Key"
+#
+# ## API Key 格式
+# - 支持逗号分隔: key1,key2,key3
+# - 自动去除空格: "key1 , key2" → ["key1", "key2"]
+# -----------------------------------------------------------------------------
 
-# API 认证规则总结
-
-## 认证方式
-
-| 请求头格式 | 示例 | 优先级 |
-|-----------|------|--------|
-| Authorization: Bearer | `Authorization: Bearer key123` | 1（优先） |
-| X-API-Key | `X-API-Key: key123` | 2（备选） |
-
-## 环境行为
-
-| 环境 | API_KEYS 配置 | 行为 |
-|------|--------------|------|
-| development | 未配置或为空 | 跳过认证（方便开发） |
-| development | 已配置 | 验证 API Key |
-| production | 未配置或为空 | **拒绝所有请求**（必须配置） |
-| production | 已配置 | 验证 API Key |
-
-## 错误码
-
-| error_code | HTTP 状态码 | 错误信息 |
-|------------|-------------|----------|
-| MISSING_API_KEY | 401 | API Key is required |
-| INVALID_API_KEY | 401 | Invalid API Key |
-| UNAUTHORIZED | 401 | Unauthorized |
-
-## API Key 格式
-
-- 支持多个 Key，用逗号分隔：`key1,key2,key3`
-- 自动去除空格：`"key1 , key2 , key3"` → `["key1", "key2", "key3"]`
-- 建议使用 32 字节以上的随机字符串
+# 以上为文档说明，以下是测试场景定义
