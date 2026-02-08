@@ -17,6 +17,7 @@
     "test:draft": "NODE_OPTIONS='--import tsx/esm' cucumber-js --tags '@wechat_draft'"
   },
   "dependencies": {
+    "form-data": "^4.0.5",
     "next": "^15.1.6",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
@@ -25,6 +26,7 @@
     "@cucumber/cucumber": "^12.6.0",
     "@cucumber/pretty-formatter": "^3.0.0",
     "@eslint/eslintrc": "^3.3.3",
+    "@types/form-data": "^2.5.2",
     "@types/node": "^22",
     "@types/react": "^19",
     "@types/react-dom": "^19",
