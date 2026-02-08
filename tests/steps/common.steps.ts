@@ -18,7 +18,7 @@ export async function makeApiRequest(
   headers: Record<string, string> = {},
   body?: string
 ): Promise<{ status: number; headers: Headers; data: any }> {
-  const url = new URL(path, 'http://localhost:3000');
+  const url = new URL(path, 'http://localhost:3001');
 
   const requestInit: RequestInit = {
     method,

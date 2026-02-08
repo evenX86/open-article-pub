@@ -57,7 +57,16 @@ When('并且请求体为:', async function (docString: string) {
 });
 
 When('我发送 POST 请求到 {string}，请求头为:', async function (path: string, docString: string) {
-  const headers = JSON.parse(docString) as Record<string, string>;
+  // 解析 HTTP 请求头格式（不是 JSON）
+  const headers: Record<string, string> = {};
+  for (const line of docString.trim().split('\n')) {
+    const colonIndex = line.indexOf(':');
+    if (colonIndex > 0) {
+      const key = line.slice(0, colonIndex).trim();
+      const value = line.slice(colonIndex + 1).trim();
+      headers[key] = value;
+    }
+  }
   (global as any).testState.requestPath = path;
   (global as any).testState.requestHeaders = headers;
 });

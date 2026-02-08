@@ -10,8 +10,8 @@
 | Feature | 步骤定义 | 测试状态 | 需要什么 |
 |---------|----------|----------|----------|
 | `markdown-converter` | ✅ 完成 | ✅ 全部通过 (11/11) | 无（纯函数测试） |
-| `api-authentication` | ✅ 完成 | ⏸️ 待运行 | 开发服务器 + API Keys |
-| `draft` | ✅ 完成 | ⏸️ 待运行 | 开发服务器 + 微信 API |
+| `api-authentication` | ✅ 完成 | ⚠️ 部分通过 (6/9) | 开发服务器 |
+| `draft` | ✅ 完成 | ⏸️ 待运行 | 开发服务器 |
 | `token-management` | ✅ 完成 | ⏸️ 待运行 | 部分需要 mock |
 
 ---
@@ -76,19 +76,25 @@ pnpm test:markdown
 pnpm test:auth
 ```
 
-**测试场景**:
-- ✅ Bearer Token 认证
-- ✅ X-API-Key 认证
-- ✅ 缺少 API Key 返回 401
-- ✅ 无效 API Key 返回 401
-- ✅ 开发模式跳过验证
-- ✅ 多个 API Keys 支持
-- ✅ 空格处理
+**当前测试结果**: 6/9 scenarios passing
+
+**通过的测试场景**:
+- ✅ Bearer Token 认证 (使用有效 API key)
+- ✅ X-API-Key 认证 (使用有效 API key)
+- ✅ 开发模式跳过验证 (未配置 API keys 时)
+- ✅ 支持配置多个 API Keys
+- ✅ API Keys 配置包含空格时自动去除
 - ✅ CORS 预检请求
 
-**可能的问题**：
-- 如果服务器未启动 → 503 Service unavailable
-- 如果 API Keys 未配置 → 认证失败
+**失败的测试场景** (由于测试架构限制):
+- ❌ 未提供 API Key 时返回 401 错误
+- ❌ 提供无效的 API Key 时返回 401 错误
+- ❌ Bearer Token 格式错误时返回 401 错误
+
+**失败原因**: 测试进程和开发服务器是独立进程，测试中设置的环境变量无法影响开发服务器。
+开发服务器从 `.env.local` 读取环境变量，该文件中 `API_KEYS` 未设置，因此服务器始终处于"开发模式跳过验证"状态。
+
+**注意**: 认证逻辑本身是正确的，只是当前的测试架构无法完全测试所有场景。如需完整测试，需改用同进程测试框架（如 Jest + supertest）。
 
 ---
 
@@ -132,11 +138,25 @@ pnpm test:token
 
 ## 已知限制和后续工作
 
+### 已完成 (2026-02-08)
+
+- [x] **微信 API Mock**: 已实现 `WECHAT_MOCK_API=true` 环境变量
+  - 影响: `draft` 和 `token-management` 测试不再调用真实 API
+  - 实现: 在 `lib/wechat/draft.ts` 中添加 mock 模式检查
+
+- [x] **开发模式认证跳过**: 已实现开发模式下未配置 API keys 时跳过认证
+  - 实现: 在 `lib/auth/api-guard.ts` 中将 dev mode 检查提前
+  - 注意: dev mode 检查必须在 null check 之前
+
+- [x] **模块解析修复**: 移除所有 `.js` 扩展名导入
+  - 修复: `lib/wechat/` 和 `lib/markdown/` 中的导入语句
+  - 原因: Next.js 15 ES 模块系统无法正确解析带 `.js` 扩展名的导入
+
 ### 高优先级
 
-- [ ] **微信 API Mock**: 当前部分测试会实际调用微信 API
-  - 影响: `draft` 和 `token-management` 测试
-  - 解决方案: 使用 `node-fetch` 的 spy 或 `msw` 库 mock API 响应
+- [ ] **测试架构改进**: 当前 Cucumber 测试与开发服务器分离
+  - 影响: 无法在测试中控制服务器环境变量
+  - 解决方案: 考虑使用 Jest + supertest 实现同进程测试
 
 - [ ] **测试隔离**: 当前测试之间可能互相影响（共享全局状态）
   - 影响: 所有集成测试

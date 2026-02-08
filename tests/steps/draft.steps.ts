@@ -61,13 +61,6 @@ When('请求体为:', async function (docString: string) {
   (global as any).testState.responseData = response.data;
 });
 
-When('我发送 OPTIONS 请求到 {string}', async function (path: string) {
-  const response = await makeApiRequest('OPTIONS', path, {});
-
-  (global as any).testState.responseStatus = response.status;
-  (global as any).testState.responseHeaders = response.headers;
-});
-
 // === 特殊断言 ===
 
 Then('草稿标题应为 {string}', function (expectedTitle: string) {
